@@ -114,7 +114,7 @@ export function restoreMissingItemsFromSnapshot(snapshot: OutfitSnapshot): numbe
     if (!exists) {
       const restoredItem: WardrobeItem = {
         id: snapItem.id,
-        name: snapItem.name + ' (已恢复)',
+        name: snapItem.name,
         image: snapItem.image,
         category: snapItem.category,
         colors: [...snapItem.colors],
