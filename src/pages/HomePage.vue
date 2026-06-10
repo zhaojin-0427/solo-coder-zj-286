@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Outfit, WardrobeItem } from '@/types'
-import { Palette, LayoutGrid, Heart, Sparkles } from 'lucide-vue-next'
+import { Palette, LayoutGrid, Heart, Sparkles, GitCompare } from 'lucide-vue-next'
 import WardrobePanel from '@/components/wardrobe/WardrobePanel.vue'
 import OutfitCanvas from '@/components/canvas/OutfitCanvas.vue'
 import InspirationGallery from '@/components/inspiration/InspirationGallery.vue'
+import ComparisonPanel from '@/components/comparison/ComparisonPanel.vue'
+import { useComparison } from '@/composables/useComparison'
 
-type Tab = 'studio' | 'inspiration'
+type Tab = 'studio' | 'inspiration' | 'comparison'
+
+const { count } = useComparison()
 
 const activeTab = ref<Tab>('studio')
 const savedNotification = ref(false)
@@ -65,6 +69,23 @@ function handleDragItem(_item: WardrobeItem) {
             <Heart class="w-4 h-4" />
             灵感收藏夹
           </button>
+          <button
+            :class="[
+              'px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all duration-200',
+              activeTab === 'comparison'
+                ? 'bg-burgundy-500 text-white shadow-soft'
+                : 'text-ink-700 hover:text-burgundy-500 hover:bg-cream-100/60',
+            ]"
+            @click="activeTab = 'comparison'"
+          >
+            <GitCompare class="w-4 h-4" />
+            对比决策台
+            <span
+              v-if="count > 0"
+              class="min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+              :class="activeTab === 'comparison' ? 'bg-white/25 text-white' : 'bg-burgundy-100 text-burgundy-600'"
+            >{{ count }}</span>
+          </button>
         </nav>
 
         <div class="text-xs text-ink-500">
@@ -84,8 +105,12 @@ function handleDragItem(_item: WardrobeItem) {
           </div>
         </div>
 
-        <div v-else key="inspiration" class="h-[calc(100vh-130px)] card p-5 overflow-hidden animate-fade-in">
+        <div v-else-if="activeTab === 'inspiration'" key="inspiration" class="h-[calc(100vh-130px)] card p-5 overflow-hidden animate-fade-in">
           <InspirationGallery @load-outfit="handleLoadOutfit" />
+        </div>
+
+        <div v-else key="comparison" class="h-[calc(100vh-130px)] card p-5 overflow-hidden animate-fade-in">
+          <ComparisonPanel @load-outfit="handleLoadOutfit" />
         </div>
       </Transition>
     </main>

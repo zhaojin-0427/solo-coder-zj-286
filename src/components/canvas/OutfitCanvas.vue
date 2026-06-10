@@ -2,13 +2,14 @@
 import { ref, computed, watch } from 'vue'
 import type { OutfitLayer, WardrobeItem, Occasion, Outfit } from '@/types'
 import { OCCASION_LABELS, STYLE_LABELS } from '@/types'
-import { Save, Trash2, Download, ShoppingBag, Sparkles } from 'lucide-vue-next'
+import { Save, Trash2, Download, ShoppingBag, Sparkles, GitCompare } from 'lucide-vue-next'
 import CanvasItem from './CanvasItem.vue'
 import HarmonyBadge from './HarmonyBadge.vue'
 import ColorAnalysis from '@/components/analysis/ColorAnalysis.vue'
 import ShoppingListModal from '@/components/shopping/ShoppingListModal.vue'
 import { useOutfit } from '@/composables/useOutfit'
 import { useWardrobe } from '@/composables/useWardrobe'
+import { useComparison } from '@/composables/useComparison'
 import { analyzeColors } from '@/utils/colorTheory'
 import { exportCanvasToImage } from '@/utils/imageExporter'
 
@@ -27,7 +28,15 @@ const {
   generateShoppingList,
 } = useOutfit()
 
-const { getItemById } = useWardrobe()
+const { getItemById, wardrobe } = useWardrobe()
+const {
+  canAddMore,
+  addOutfitToComparison,
+  buildTemporaryOutfit,
+} = useComparison()
+
+const addedNotification = ref(false)
+const fullNotification = ref(false)
 
 const canvasRef = ref<HTMLElement | null>(null)
 const isDragOver = ref(false)
@@ -108,6 +117,25 @@ function handleShoppingList() {
   showShoppingModal.value = true
 }
 
+function handleAddToComparison() {
+  if (canvasItems.value.length === 0) return
+  if (!canAddMore.value) {
+    fullNotification.value = true
+    setTimeout(() => {
+      fullNotification.value = false
+    }, 2500)
+    return
+  }
+  const tempOutfit = buildTemporaryOutfit(canvasLayers.value, wardrobe.value, outfitOccasion.value)
+  const success = addOutfitToComparison(tempOutfit, true)
+  if (success) {
+    addedNotification.value = true
+    setTimeout(() => {
+      addedNotification.value = false
+    }, 2500)
+  }
+}
+
 watch(canvasLayers, () => {}, { deep: true })
 </script>
 
@@ -120,7 +148,15 @@ watch(canvasLayers, () => {}, { deep: true })
           {{ canvasItems.length > 0 ? `已添加 ${canvasItems.length} 件单品` : '从左侧衣橱拖拽单品到画布' }}
         </p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-2 flex-wrap">
+        <button
+          class="btn-secondary flex items-center gap-1.5"
+          :disabled="canvasItems.length === 0"
+          @click="handleAddToComparison"
+          :title="!canAddMore ? '对比区已满（最多3套）' : '将当前画布搭配加入对比'"
+        >
+          <GitCompare class="w-4 h-4" />加入对比
+        </button>
         <button
           class="btn-secondary flex items-center gap-1.5"
           :disabled="canvasItems.length === 0"
@@ -266,10 +302,39 @@ watch(canvasLayers, () => {}, { deep: true })
       :items="canvasItems.map(c => c.item)"
       @close="showShoppingModal = false"
     />
+
+    <Teleport to="body">
+      <Transition name="slide-up">
+        <div
+          v-if="addedNotification"
+          class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-ink-900 text-white px-5 py-3 rounded-xl shadow-card flex items-center gap-2"
+        >
+          <GitCompare class="w-4 h-4 text-burgundy-300" />
+          <span class="text-sm font-medium">已加入对比决策台</span>
+        </div>
+      </Transition>
+      <Transition name="slide-up">
+        <div
+          v-if="fullNotification"
+          class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-amber-600 text-white px-5 py-3 rounded-xl shadow-card flex items-center gap-2"
+        >
+          <GitCompare class="w-4 h-4" />
+          <span class="text-sm font-medium">对比区已满，最多同时对比 3 套方案</span>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.slide-up-enter-active, .slide-up-leave-active {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.slide-up-enter-from, .slide-up-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 30px);
+}
 </style>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Outfit, WardrobeItem } from '@/types'
 import { STYLE_LABELS, OCCASION_LABELS, CATEGORY_LABELS } from '@/types'
-import { Trash2, Eye } from 'lucide-vue-next'
+import { Trash2, Eye, GitCompare } from 'lucide-vue-next'
+import { useComparison } from '@/composables/useComparison'
 
 const props = defineProps<{
   outfit: Outfit
@@ -24,6 +25,26 @@ const allColors = computed(() => {
   props.items.forEach(i => c.push(...i.colors))
   return c
 })
+
+const {
+  canAddMore,
+  isOutfitInComparison,
+  addOutfitToComparison,
+} = useComparison()
+
+const inComparison = computed(() => isOutfitInComparison(props.outfit.id))
+const addedNotification = ref(false)
+
+function handleAddToComparison() {
+  if (!canAddMore.value) return
+  const success = addOutfitToComparison(props.outfit, false)
+  if (success) {
+    addedNotification.value = true
+    setTimeout(() => {
+      addedNotification.value = false
+    }, 1500)
+  }
+}
 </script>
 
 <template>
@@ -46,6 +67,19 @@ const allColors = computed(() => {
           :style="{ backgroundColor: c }"
         ></span>
       </div>
+      <div v-if="inComparison" class="absolute top-2 left-2 z-10">
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-burgundy-500 text-white shadow-soft flex items-center gap-1">
+          <GitCompare class="w-3 h-3" />
+          对比中
+        </span>
+      </div>
+      <Transition name="fade">
+        <div v-if="addedNotification" class="absolute top-2 right-2 z-10">
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sage-500 text-white shadow-soft">
+            ✓ 已加入
+          </span>
+        </div>
+      </Transition>
       <div class="absolute inset-0 bg-ink-900/0 group-hover:bg-ink-900/40 transition-all duration-300 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
         <button
           class="w-9 h-9 rounded-full bg-white flex items-center justify-center text-ink-900 hover:bg-burgundy-500 hover:text-white transition-all"
@@ -53,6 +87,17 @@ const allColors = computed(() => {
           @click="emit('load', outfit)"
         >
           <Eye class="w-4 h-4" />
+        </button>
+        <button
+          :class="[
+            'w-9 h-9 rounded-full bg-white flex items-center justify-center text-ink-900 transition-all',
+            inComparison ? 'opacity-50 cursor-not-allowed' : 'hover:bg-sage-500 hover:text-white',
+          ]"
+          :title="inComparison ? '已在对比区' : (!canAddMore ? '对比区已满' : '加入对比')"
+          :disabled="inComparison || !canAddMore"
+          @click="handleAddToComparison"
+        >
+          <GitCompare class="w-4 h-4" />
         </button>
         <button
           class="w-9 h-9 rounded-full bg-white flex items-center justify-center text-ink-900 hover:bg-burgundy-500 hover:text-white transition-all"
@@ -90,3 +135,8 @@ const allColors = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+</style>
