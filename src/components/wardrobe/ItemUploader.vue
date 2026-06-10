@@ -20,24 +20,27 @@ const name = ref('')
 const category = ref<Category>('top')
 const extractedColors = ref<string[]>([])
 const extracting = ref(false)
+const isDragOver = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+
+function resetState() {
+  file.value = null
+  preview.value = ''
+  name.value = ''
+  extractedColors.value = []
+  extracting.value = false
+  if (fileInput.value) fileInput.value.value = ''
+}
 
 watch(
   () => props.show,
   (v) => {
-    if (!v) {
-      file.value = null
-      preview.value = ''
-      name.value = ''
-      category.value = 'top'
-      extractedColors.value = []
-    }
+    if (!v) resetState()
   },
 )
 
-function handleFile(e: Event) {
-  const target = e.target as HTMLInputElement
-  const f = target.files?.[0]
-  if (!f) return
+function processFile(f: File) {
+  if (!f.type.startsWith('image/')) return
   file.value = f
   name.value = f.name.replace(/\.[^.]+$/, '')
   const reader = new FileReader()
@@ -53,6 +56,33 @@ function handleFile(e: Event) {
     }
   }
   reader.readAsDataURL(f)
+}
+
+function handleFile(e: Event) {
+  const target = e.target as HTMLInputElement
+  const f = target.files?.[0]
+  if (f) processFile(f)
+}
+
+function handleDragOver(e: DragEvent) {
+  e.preventDefault()
+  e.dataTransfer!.dropEffect = 'copy'
+  isDragOver.value = true
+}
+
+function handleDragLeave() {
+  isDragOver.value = false
+}
+
+function handleDrop(e: DragEvent) {
+  e.preventDefault()
+  isDragOver.value = false
+  const f = e.dataTransfer?.files?.[0]
+  if (f) processFile(f)
+}
+
+function handleClearPreview() {
+  resetState()
 }
 
 function handleSubmit() {
@@ -87,10 +117,21 @@ function handleSubmit() {
               <label class="block text-sm font-medium text-ink-700 mb-2">单品照片</label>
               <div
                 v-if="!preview"
-                class="border-2 border-dashed border-cream-300 rounded-xl p-8 text-center
-                       hover:border-burgundy-500 hover:bg-burgundy-50/30 transition-all cursor-pointer"
+                :class="[
+                  'border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer',
+                  isDragOver
+                    ? 'border-burgundy-500 bg-burgundy-50/40 scale-[1.01]'
+                    : 'border-cream-300 hover:border-burgundy-500 hover:bg-burgundy-50/30',
+                ]"
+                @dragover="handleDragOver"
+                @dragleave="handleDragLeave"
+                @drop="handleDrop"
               >
-                <input type="file" accept="image/*" class="hidden" id="file-input" @change="handleFile" />
+                <input
+                  ref="fileInput"
+                  type="file" accept="image/*" class="hidden" id="file-input"
+                  @change="handleFile"
+                />
                 <label for="file-input" class="cursor-pointer block">
                   <Upload class="w-10 h-10 mx-auto text-ink-300 mb-2" />
                   <p class="text-sm text-ink-500">点击或拖拽上传照片</p>
@@ -100,8 +141,8 @@ function handleSubmit() {
               <div v-else class="relative">
                 <img :src="preview" class="w-full h-48 object-cover rounded-xl" />
                 <button
-                  class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center"
-                  @click="preview = ''; file = null"
+                  class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center hover:bg-burgundy-500 hover:text-white transition-all"
+                  @click="handleClearPreview"
                 >
                   <X class="w-4 h-4" />
                 </button>

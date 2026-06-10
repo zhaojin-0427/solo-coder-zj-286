@@ -5,9 +5,10 @@ import { analyzeColors } from '@/utils/colorTheory'
 import { generateId } from '@/utils/storage'
 import { CATEGORY_LABELS } from '@/types'
 
+const canvasLayers = ref<OutfitLayer[]>([])
+
 export function useOutfit() {
-  const { outfits, generateId: gid } = useStorage()
-  const canvasLayers = ref<OutfitLayer[]>([])
+  const { outfits, generateId: gid, wardrobe } = useStorage()
   const canvasItemIds = computed(() => canvasLayers.value.map(l => l.itemId))
   const searchQuery = ref('')
   const filterStyle = ref<StyleType | 'all'>('all')
@@ -15,6 +16,10 @@ export function useOutfit() {
 
   const allColors = computed(() => {
     const colors: string[] = []
+    canvasLayers.value.forEach(layer => {
+      const item = wardrobe.value.find(w => w.id === layer.itemId)
+      if (item) colors.push(...item.colors)
+    })
     return colors
   })
 
