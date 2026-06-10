@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Outfit, WardrobeItem } from '@/types'
-import { Palette, LayoutGrid, Heart, Sparkles, GitCompare } from 'lucide-vue-next'
+import type { Outfit, WardrobeItem, OutfitLayer, Occasion } from '@/types'
+import { Palette, LayoutGrid, Heart, Sparkles, GitCompare, CalendarDays } from 'lucide-vue-next'
 import WardrobePanel from '@/components/wardrobe/WardrobePanel.vue'
 import OutfitCanvas from '@/components/canvas/OutfitCanvas.vue'
 import InspirationGallery from '@/components/inspiration/InspirationGallery.vue'
 import ComparisonPanel from '@/components/comparison/ComparisonPanel.vue'
+import OutfitCalendar from '@/components/calendar/OutfitCalendar.vue'
 import { useComparison } from '@/composables/useComparison'
+import { useOutfit } from '@/composables/useOutfit'
 
-type Tab = 'studio' | 'inspiration' | 'comparison'
+type Tab = 'studio' | 'inspiration' | 'comparison' | 'calendar'
 
 const { count } = useComparison()
+const { loadLayersToCanvas } = useOutfit()
 
 const activeTab = ref<Tab>('studio')
 const savedNotification = ref(false)
@@ -23,6 +26,11 @@ function handleSaved(_outfit: Outfit) {
 }
 
 function handleLoadOutfit() {
+  activeTab.value = 'studio'
+}
+
+function handleLoadCalendarOutfit(layers: OutfitLayer[], occasion: Occasion | '') {
+  loadLayersToCanvas(layers, occasion)
   activeTab.value = 'studio'
 }
 
@@ -86,6 +94,18 @@ function handleDragItem(_item: WardrobeItem) {
               :class="activeTab === 'comparison' ? 'bg-white/25 text-white' : 'bg-burgundy-100 text-burgundy-600'"
             >{{ count }}</span>
           </button>
+          <button
+            :class="[
+              'px-5 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all duration-200',
+              activeTab === 'calendar'
+                ? 'bg-burgundy-500 text-white shadow-soft'
+                : 'text-ink-700 hover:text-burgundy-500 hover:bg-cream-100/60',
+            ]"
+            @click="activeTab = 'calendar'"
+          >
+            <CalendarDays class="w-4 h-4" />
+            穿搭日历
+          </button>
         </nav>
 
         <div class="text-xs text-ink-500">
@@ -109,8 +129,12 @@ function handleDragItem(_item: WardrobeItem) {
           <InspirationGallery @load-outfit="handleLoadOutfit" />
         </div>
 
-        <div v-else key="comparison" class="h-[calc(100vh-130px)] card p-5 overflow-hidden animate-fade-in">
+        <div v-else-if="activeTab === 'comparison'" key="comparison" class="h-[calc(100vh-130px)] card p-5 overflow-hidden animate-fade-in">
           <ComparisonPanel @load-outfit="handleLoadOutfit" />
+        </div>
+
+        <div v-else key="calendar" class="h-[calc(100vh-130px)] card p-5 overflow-hidden animate-fade-in">
+          <OutfitCalendar @load-outfit="handleLoadCalendarOutfit" />
         </div>
       </Transition>
     </main>

@@ -108,6 +108,12 @@ export function useOutfit() {
     canvasLoadedOutfitId.value = outfit.id
   }
 
+  function loadLayersToCanvas(layers: OutfitLayer[], occasion: Occasion | '' = '') {
+    canvasLayers.value = JSON.parse(JSON.stringify(layers))
+    canvasOccasion.value = occasion
+    canvasLoadedOutfitId.value = null
+  }
+
   function generateShoppingList(currentItems: WardrobeItem[]): ShoppingItem[] {
     const categories = new Set(currentItems.map(i => i.category))
     const needed: { category: WardrobeItem['category'], colors: string[] }[] = []
@@ -143,6 +149,7 @@ export function useOutfit() {
     saveOutfit,
     deleteOutfit,
     loadOutfitToCanvas,
+    loadLayersToCanvas,
     generateShoppingList,
   }
 }

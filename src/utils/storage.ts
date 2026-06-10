@@ -1,15 +1,17 @@
-import type { WardrobeItem, Outfit } from '@/types'
+import type { WardrobeItem, Outfit, CalendarSchedule } from '@/types'
 
 const STORAGE_KEY = 'outfit-collector-data'
 
 interface AppStorage {
   wardrobe: WardrobeItem[]
   outfits: Outfit[]
+  calendarSchedules: CalendarSchedule[]
 }
 
 const defaultStorage: AppStorage = {
   wardrobe: [],
   outfits: [],
+  calendarSchedules: [],
 }
 
 export function loadStorage(): AppStorage {
@@ -20,6 +22,7 @@ export function loadStorage(): AppStorage {
     return {
       wardrobe: parsed.wardrobe || [],
       outfits: parsed.outfits || [],
+      calendarSchedules: parsed.calendarSchedules || [],
     }
   } catch {
     return { ...defaultStorage }

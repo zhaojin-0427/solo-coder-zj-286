@@ -4,6 +4,8 @@ export type StyleType = 'monochromatic' | 'complementary' | 'neutral' | 'analogo
 
 export type Occasion = 'daily' | 'work' | 'date' | 'party' | 'travel' | 'sport'
 
+export type WeatherTag = 'sunny' | 'cloudy' | 'rainy' | 'snowy' | 'windy' | 'hot' | 'cold'
+
 export type CompareSortType = 'commute' | 'harmony' | 'minimal'
 
 export interface MissingCategory {
@@ -95,4 +97,52 @@ export const COMPARE_SORT_DESCRIPTIONS: Record<CompareSortType, string> = {
   commute: '优先展示职场/日常场合搭配',
   harmony: '按色彩协调性评分从高到低',
   minimal: '按缺失单品数量从少到多',
+}
+
+export interface WardrobeItemSnapshot {
+  id: string
+  name: string
+  image: string
+  category: Category
+  colors: string[]
+}
+
+export interface OutfitSnapshot {
+  id: string
+  name: string
+  occasion: Occasion | ''
+  style: StyleType | ''
+  harmonyScore: number
+  items: WardrobeItemSnapshot[]
+  layers: OutfitLayer[]
+}
+
+export interface CalendarSchedule {
+  id: string
+  date: string
+  outfitSnapshot: OutfitSnapshot
+  occasion: Occasion | ''
+  note: string
+  weather: WeatherTag | ''
+  createdAt: string
+}
+
+export const WEATHER_LABELS: Record<WeatherTag, string> = {
+  sunny: '晴天',
+  cloudy: '多云',
+  rainy: '雨天',
+  snowy: '雪天',
+  windy: '大风',
+  hot: '炎热',
+  cold: '寒冷',
+}
+
+export const WEATHER_ICONS: Record<WeatherTag, string> = {
+  sunny: '☀️',
+  cloudy: '☁️',
+  rainy: '🌧️',
+  snowy: '❄️',
+  windy: '💨',
+  hot: '🔥',
+  cold: '🥶',
 }
