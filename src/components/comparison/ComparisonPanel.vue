@@ -4,7 +4,6 @@ import type { Outfit, CompareSortType } from '@/types'
 import { COMPARE_SORT_LABELS, COMPARE_SORT_DESCRIPTIONS } from '@/types'
 import { GitCompare, Trash2, Plus, Info } from 'lucide-vue-next'
 import { useComparison } from '@/composables/useComparison'
-import { useWardrobe } from '@/composables/useWardrobe'
 import { useOutfit } from '@/composables/useOutfit'
 import ComparisonCard from './ComparisonCard.vue'
 
@@ -13,7 +12,6 @@ const emit = defineEmits<{
 }>()
 
 const {
-  comparisonEntries,
   sortType,
   count,
   MAX_COMPARISONS,
@@ -21,15 +19,13 @@ const {
   clearComparison,
   sortEntries,
   setSortType,
-  getOutfitItems,
   getMissingCategories,
   getDominantColors,
 } = useComparison()
 
-const { wardrobe } = useWardrobe()
 const { loadOutfitToCanvas } = useOutfit()
 
-const sortedEntries = computed(() => sortEntries(wardrobe.value))
+const sortedEntries = computed(() => sortEntries())
 const emptySlots = computed(() => Math.max(0, MAX_COMPARISONS - sortedEntries.value.length))
 
 const sortOptions: CompareSortType[] = ['commute', 'harmony', 'minimal']
@@ -111,9 +107,9 @@ function handleLoadToCanvas(outfit: Outfit) {
           v-for="entry in sortedEntries"
           :key="entry.comparisonId"
           :outfit="entry.outfit"
-          :items="getOutfitItems(entry.outfit, wardrobe)"
-          :dominant-colors="getDominantColors(entry.outfit, wardrobe)"
-          :missing-categories="getMissingCategories(entry.outfit, wardrobe)"
+          :items="entry.itemSnapshots"
+          :dominant-colors="getDominantColors(entry)"
+          :missing-categories="getMissingCategories(entry)"
           :is-temporary="entry.isTemporary"
           @remove="removeFromComparison(entry.comparisonId)"
           @load-to-canvas="handleLoadToCanvas"

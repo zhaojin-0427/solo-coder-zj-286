@@ -6,6 +6,8 @@ import { generateId } from '@/utils/storage'
 import { CATEGORY_LABELS } from '@/types'
 
 const canvasLayers = ref<OutfitLayer[]>([])
+const canvasOccasion = ref<Occasion | ''>('')
+const canvasLoadedOutfitId = ref<string | null>(null)
 
 export function useOutfit() {
   const { outfits, generateId: gid, wardrobe } = useStorage()
@@ -53,11 +55,13 @@ export function useOutfit() {
       zIndex: canvasLayers.value.length + 1,
     }
     canvasLayers.value.push(layer)
+    canvasLoadedOutfitId.value = null
   }
 
   function removeLayer(itemId: string) {
     const idx = canvasLayers.value.findIndex(l => l.itemId === itemId)
     if (idx >= 0) canvasLayers.value.splice(idx, 1)
+    canvasLoadedOutfitId.value = null
   }
 
   function updateLayer(itemId: string, patch: Partial<OutfitLayer>) {
@@ -67,6 +71,8 @@ export function useOutfit() {
 
   function clearCanvas() {
     canvasLayers.value = []
+    canvasOccasion.value = ''
+    canvasLoadedOutfitId.value = null
   }
 
   function saveOutfit(
@@ -98,6 +104,8 @@ export function useOutfit() {
 
   function loadOutfitToCanvas(outfit: Outfit) {
     canvasLayers.value = JSON.parse(JSON.stringify(outfit.layers))
+    canvasOccasion.value = outfit.occasion
+    canvasLoadedOutfitId.value = outfit.id
   }
 
   function generateShoppingList(currentItems: WardrobeItem[]): ShoppingItem[] {
@@ -120,6 +128,8 @@ export function useOutfit() {
     outfits,
     canvasLayers,
     canvasItemIds,
+    canvasOccasion,
+    canvasLoadedOutfitId,
     searchQuery,
     filterStyle,
     filterOccasion,

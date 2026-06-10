@@ -20,6 +20,9 @@ const emit = defineEmits<{
 const {
   canvasLayers,
   canvasItemIds,
+  canvasOccasion,
+  canvasLoadedOutfitId,
+  outfits,
   addItemToCanvas,
   removeLayer,
   updateLayer,
@@ -31,12 +34,14 @@ const {
 const { getItemById, wardrobe } = useWardrobe()
 const {
   canAddMore,
+  isCanvasInComparison,
   addOutfitToComparison,
   buildTemporaryOutfit,
 } = useComparison()
 
 const addedNotification = ref(false)
 const fullNotification = ref(false)
+const duplicateNotification = ref(false)
 
 const canvasRef = ref<HTMLElement | null>(null)
 const isDragOver = ref(false)
@@ -119,6 +124,14 @@ function handleShoppingList() {
 
 function handleAddToComparison() {
   if (canvasItems.value.length === 0) return
+  const currentItemIds = canvasItemIds.value
+  if (isCanvasInComparison(currentItemIds)) {
+    duplicateNotification.value = true
+    setTimeout(() => {
+      duplicateNotification.value = false
+    }, 2500)
+    return
+  }
   if (!canAddMore.value) {
     fullNotification.value = true
     setTimeout(() => {
@@ -126,8 +139,15 @@ function handleAddToComparison() {
     }, 2500)
     return
   }
-  const tempOutfit = buildTemporaryOutfit(canvasLayers.value, wardrobe.value, outfitOccasion.value)
-  const success = addOutfitToComparison(tempOutfit, true)
+  const items = canvasItems.value.map(c => c.item)
+  const loadedOutfit = outfits.value.find(o => o.id === canvasLoadedOutfitId.value)
+  const tempOutfit = buildTemporaryOutfit(
+    canvasLayers.value,
+    items,
+    canvasOccasion.value,
+    loadedOutfit?.name,
+  )
+  const success = addOutfitToComparison(tempOutfit, items, true, currentItemIds)
   if (success) {
     addedNotification.value = true
     setTimeout(() => {
@@ -153,7 +173,7 @@ watch(canvasLayers, () => {}, { deep: true })
           class="btn-secondary flex items-center gap-1.5"
           :disabled="canvasItems.length === 0"
           @click="handleAddToComparison"
-          :title="!canAddMore ? '对比区已满（最多3套）' : '将当前画布搭配加入对比'"
+          :title="isCanvasInComparison(canvasItemIds) ? '这套搭配已在对比区' : (!canAddMore ? '对比区已满（最多3套）' : '将当前画布搭配加入对比')"
         >
           <GitCompare class="w-4 h-4" />加入对比
         </button>
@@ -320,6 +340,15 @@ watch(canvasLayers, () => {}, { deep: true })
         >
           <GitCompare class="w-4 h-4" />
           <span class="text-sm font-medium">对比区已满，最多同时对比 3 套方案</span>
+        </div>
+      </Transition>
+      <Transition name="slide-up">
+        <div
+          v-if="duplicateNotification"
+          class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-ink-700 text-white px-5 py-3 rounded-xl shadow-card flex items-center gap-2"
+        >
+          <GitCompare class="w-4 h-4 text-cream-200" />
+          <span class="text-sm font-medium">这套画布搭配已在对比区</span>
         </div>
       </Transition>
     </Teleport>

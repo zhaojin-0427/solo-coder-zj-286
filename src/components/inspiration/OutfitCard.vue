@@ -37,7 +37,7 @@ const addedNotification = ref(false)
 
 function handleAddToComparison() {
   if (!canAddMore.value) return
-  const success = addOutfitToComparison(props.outfit, false)
+  const success = addOutfitToComparison(props.outfit, props.items, false)
   if (success) {
     addedNotification.value = true
     setTimeout(() => {
