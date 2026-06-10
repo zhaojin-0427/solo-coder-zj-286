@@ -20,6 +20,7 @@ export interface WardrobeItem {
   category: Category
   colors: string[]
   createdAt: string
+  restoredFromSnapshot?: boolean
 }
 
 export interface OutfitLayer {

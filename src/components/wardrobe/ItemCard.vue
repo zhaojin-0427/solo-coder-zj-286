@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { WardrobeItem, Category } from '@/types'
 import { CATEGORY_LABELS } from '@/types'
-import { Trash2 } from 'lucide-vue-next'
+import { Trash2, RefreshCw } from 'lucide-vue-next'
 
 const props = defineProps<{
   item: WardrobeItem
@@ -49,6 +49,14 @@ function handleDragStart(e: DragEvent) {
       >
         <Trash2 class="w-3.5 h-3.5" />
       </button>
+      <div
+        v-if="item.restoredFromSnapshot"
+        class="absolute top-1.5 left-1.5 z-10 px-1.5 py-0.5 rounded-full bg-sage-500 text-white text-[9px] font-medium shadow-soft flex items-center gap-0.5"
+        title="从日历快照恢复"
+      >
+        <RefreshCw class="w-2.5 h-2.5" />
+        已恢复
+      </div>
     </div>
     <div class="flex items-start justify-between gap-2">
       <div class="min-w-0 flex-1">

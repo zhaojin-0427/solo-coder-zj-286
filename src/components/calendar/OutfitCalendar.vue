@@ -11,7 +11,7 @@ import {
 import { useOutfit } from '@/composables/useOutfit'
 
 const emit = defineEmits<{
-  loadOutfit: [layers: OutfitLayer[], occasion: Occasion | '']
+  loadOutfit: [snapshot: OutfitSnapshot, layers: OutfitLayer[], occasion: Occasion | '']
 }>()
 
 const {
@@ -78,7 +78,7 @@ function handleSave(data: {
 function handleLoadToCanvas(schedule: CalendarSchedule) {
   const layers = JSON.parse(JSON.stringify(schedule.outfitSnapshot.layers)) as OutfitLayer[]
   const occasion = schedule.occasion || schedule.outfitSnapshot.occasion || ''
-  emit('loadOutfit', layers, occasion)
+  emit('loadOutfit', schedule.outfitSnapshot, layers, occasion)
 }
 
 function isToday(date: Date): boolean {

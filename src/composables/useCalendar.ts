@@ -13,6 +13,15 @@ import { useStorage } from './useStorage'
 import { useWardrobe } from './useWardrobe'
 import { generateId } from '@/utils/storage'
 
+let wardrobeRef: ReturnType<typeof useStorage>['wardrobe'] | null = null
+function getWardrobeRef() {
+  if (!wardrobeRef) {
+    const { wardrobe } = useStorage()
+    wardrobeRef = wardrobe
+  }
+  return wardrobeRef
+}
+
 export function formatDate(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -95,6 +104,28 @@ export function createSnapshotFromCanvasItems(
     items: itemSnapshots,
     layers: JSON.parse(JSON.stringify(layers)) as OutfitLayer[],
   }
+}
+
+export function restoreMissingItemsFromSnapshot(snapshot: OutfitSnapshot): number {
+  const wardrobe = getWardrobeRef()
+  let restoredCount = 0
+  snapshot.items.forEach(snapItem => {
+    const exists = wardrobe.value.find(w => w.id === snapItem.id)
+    if (!exists) {
+      const restoredItem: WardrobeItem = {
+        id: snapItem.id,
+        name: snapItem.name + ' (已恢复)',
+        image: snapItem.image,
+        category: snapItem.category,
+        colors: [...snapItem.colors],
+        createdAt: new Date().toISOString(),
+        restoredFromSnapshot: true,
+      }
+      wardrobe.value.push(restoredItem)
+      restoredCount++
+    }
+  })
+  return restoredCount
 }
 
 export function useCalendar() {

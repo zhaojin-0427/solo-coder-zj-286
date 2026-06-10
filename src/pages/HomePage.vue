@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Outfit, WardrobeItem, OutfitLayer, Occasion } from '@/types'
-import { Palette, LayoutGrid, Heart, Sparkles, GitCompare, CalendarDays } from 'lucide-vue-next'
+import type { Outfit, WardrobeItem, OutfitLayer, Occasion, OutfitSnapshot } from '@/types'
+import { Palette, LayoutGrid, Heart, Sparkles, GitCompare, CalendarDays, RefreshCw } from 'lucide-vue-next'
 import WardrobePanel from '@/components/wardrobe/WardrobePanel.vue'
 import OutfitCanvas from '@/components/canvas/OutfitCanvas.vue'
 import InspirationGallery from '@/components/inspiration/InspirationGallery.vue'
@@ -9,6 +9,7 @@ import ComparisonPanel from '@/components/comparison/ComparisonPanel.vue'
 import OutfitCalendar from '@/components/calendar/OutfitCalendar.vue'
 import { useComparison } from '@/composables/useComparison'
 import { useOutfit } from '@/composables/useOutfit'
+import { restoreMissingItemsFromSnapshot } from '@/composables/useCalendar'
 
 type Tab = 'studio' | 'inspiration' | 'comparison' | 'calendar'
 
@@ -17,6 +18,8 @@ const { loadLayersToCanvas } = useOutfit()
 
 const activeTab = ref<Tab>('studio')
 const savedNotification = ref(false)
+const restoredNotification = ref(false)
+const restoredCount = ref(0)
 
 function handleSaved(_outfit: Outfit) {
   savedNotification.value = true
@@ -29,7 +32,15 @@ function handleLoadOutfit() {
   activeTab.value = 'studio'
 }
 
-function handleLoadCalendarOutfit(layers: OutfitLayer[], occasion: Occasion | '') {
+function handleLoadCalendarOutfit(snapshot: OutfitSnapshot, layers: OutfitLayer[], occasion: Occasion | '') {
+  const n = restoreMissingItemsFromSnapshot(snapshot)
+  if (n > 0) {
+    restoredCount.value = n
+    restoredNotification.value = true
+    setTimeout(() => {
+      restoredNotification.value = false
+    }, 3000)
+  }
   loadLayersToCanvas(layers, occasion)
   activeTab.value = 'studio'
 }
@@ -147,6 +158,15 @@ function handleDragItem(_item: WardrobeItem) {
         >
           <Sparkles class="w-4 h-4 text-yellow-300" />
           <span class="text-sm font-medium">搭配已收藏到灵感夹</span>
+        </div>
+      </Transition>
+      <Transition name="slide-up">
+        <div
+          v-if="restoredNotification"
+          class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-sage-600 text-white px-5 py-3 rounded-xl shadow-card flex items-center gap-2"
+        >
+          <RefreshCw class="w-4 h-4 text-cream-50" />
+          <span class="text-sm font-medium">已从快照恢复 {{ restoredCount }} 件衣橱单品</span>
         </div>
       </Transition>
     </Teleport>
